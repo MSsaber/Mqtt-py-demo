@@ -14,6 +14,9 @@ class MqttClientType(Enum):
 
 #
 class MqttClient(object):
+    '''
+    MQTT的客户端封装类,可以做为发布者,订阅者和收发者
+    '''
     _callback_name = [ 'on_connect', 'on_connect_fail', 'on_disconnect', 'on_message', 'on_publish',
                     'on_subscribe', 'on_unsubscribe', 'on_log', 'on_socket_open', 'on_socket_close',
                     'on_socket_register_write', 'on_socket_unregister_write' ]
@@ -28,17 +31,22 @@ class MqttClient(object):
         """
         """
         self._pub_lock = Lock()
-        self._sub_lock = Lock()
         self._pub_run = True
         self._sub_run = False
 
         self._pub_thread = None
-        self._sub_thread = None
 
     def CID(self):
+        '''
+        获取客户端ID号
+        '''
         return self._client_id
 
     def initial(self):
+        '''
+        初始化客户端配置,主要配置broker和连接端口.并且会将设置的回调函数通过
+        Mqtt.Client的__dict__的key检测配置给实例
+        '''
         self._client = mqtt_client.Client(self._client_id)
         """
         """
@@ -56,6 +64,9 @@ class MqttClient(object):
         self._client.loop_stop()
 
     def publish(self, topic, msg):
+        '''
+        消息发布: 1.topic主题 2.msg消息
+        '''
         pub_msg = f"messages: {msg}"
         result = self._client.publish(topic, msg)
         # result: [0, 1]
@@ -73,6 +84,9 @@ class MqttClient(object):
             self._pub_lock.release()
 
     def loop_publish(self, topic, msg, gap):
+        '''
+        固定消息的循环发布: 1.topic主题 2.msg消息 3.gap发布间隔
+        '''
         self._gap = gap
         self._msg = msg
         self._topic = topic
@@ -80,14 +94,23 @@ class MqttClient(object):
         self._pub_thread.start()
 
     def close_publish(self):
+        '''
+        关闭固定循环发布
+        '''
         self._pub_lock.acquire()
         self._pub_run = False
         self._pub_lock.release()
 
     def subscribe(self, topic):
+        '''
+        订阅:topic需要订阅的主题
+        '''
         self._client.subscribe(topic)
 
     def unsubscribe(self, topic):
+        '''
+        取消订阅:topic需要取消订阅的主题
+        '''
         self._client.unsubscribe(topic)
 
     def loop_forever(self):

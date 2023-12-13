@@ -17,6 +17,9 @@ topic3 = "/python/mqtt/pub3"
 moniter_count = 30
 
 class Publish:
+    '''
+    显示成功链接至broker的信息
+    '''
     def on_connect(client, userdata, flags, rc):
         print('userdata : %s' % (userdata))
         if rc == 0:
@@ -25,7 +28,13 @@ class Publish:
             print("Failed to connect with error %d\n", rc)
 
 class Publish2(Publish):
+    '''
+    订阅信息回调
+    '''
     def on_message(client, userdata, msg):
+        '''
+        设备3会在用户设置的计数达到后取消对设备2消息的订阅
+        '''
         global moniter_count
         print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
         parse_msg = msg.payload.decode().split(':')
@@ -36,6 +45,9 @@ class Publish2(Publish):
 
 
 class Publish3(Publish2):
+    '''
+    订阅状态回调
+    '''
     def on_subscribe(client, userdata, mid, granted_qos):
         print(f"Subscribe status : ",userdata,mid,granted_qos)
 
@@ -43,6 +55,7 @@ def create_publisher(id):
     global publish1,publish2,publish3
     if id == 1:
         '''
+        设备1,仅发布设备运行正常信息
         '''
         publish1 = MqttClient(MqttClientType.pub, broker, port, \
             on_connect = Publish.on_connect)
@@ -51,6 +64,7 @@ def create_publisher(id):
         publish1.loop_publish(topic1, 'Device1 status ok...', 1)
     elif id == 2:
         '''
+        设备2,模拟设备状态变化的消息发布
         '''
         publish2 = MqttClient(MqttClientType.pub, broker, port, \
         on_connect = Publish2.on_connect, on_message = Publish2.on_message)
@@ -63,6 +77,7 @@ def create_publisher(id):
             num+=1
     elif id == 3:
         '''
+        设备3,模拟设备状态变化的消息发布,并且会接收设备2的状态信息,在达到模拟状态后会取消对设备2消息的订阅
         '''
         publish3 = MqttClient(MqttClientType.both, broker, port, \
         on_connect = Publish3.on_connect, on_subscribe = Publish3.on_subscribe,\
@@ -79,6 +94,11 @@ def create_publisher(id):
 if __name__ == '__main__':
     import argparse
     '''
+    通过配置参数选择需要启动的设备
+    e.g. python3 publish.py --pub 1
+         python3 publish.py --pub 2
+         python3 publish.py --pub 3 --count 40
+         count 参数设置设备3监听变化的参数
     '''
     args_parse = argparse.ArgumentParser()
     args_parse.add_argument('--pub',type=int)

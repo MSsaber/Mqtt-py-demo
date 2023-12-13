@@ -1,0 +1,8 @@
+项目服务器基于ENQX实现
+打开全部五个设备,需要打开五个终端,依次启动5个设备
+例：
+终端1    python3 publish.py --pub 1
+终端2    python3 publish.py --pub 2
+终端3    python3 publish.py --pub 3 --count 40
+终端4    python3 subscriber.py --sub 4
+终端5    python3 subscriber.py --sub 5 --count 60
